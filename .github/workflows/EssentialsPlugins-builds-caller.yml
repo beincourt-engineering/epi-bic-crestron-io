@@ -3,6 +3,13 @@ on:
     branches:
       - '**'
 
+# Write on contents and packages, asked for here rather than taken from the organization's default token permissions:
+# the build tags the release and pushes the NuGet package with the workflow's own token, and an organization can default
+# that token to read-only.
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   getVersion:
     uses: PepperDash/workflow-templates/.github/workflows/essentialsplugins-getversion.yml@main
