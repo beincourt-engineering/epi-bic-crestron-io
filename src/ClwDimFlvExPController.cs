@@ -18,13 +18,20 @@ namespace PepperDash.Essentials.Plugins
     /// from config device actions.
     /// </summary>
     [Description("Wrapper class for the CLW-DIMFLVEX-P infiNET EX dimmer")]
-    public class ClwDimFlvExPController : EssentialsDevice, IHasFeedback
+    public class ClwDimFlvExPController : EssentialsDevice, IHasFeedback, ICommunicationMonitor
     {
         private const uint LoadNumber = 1;
 
         private ClwDimFlvExP _dimmer;
 
         public FeedbackCollection<Feedback> Feedbacks { get; } = new FeedbackCollection<Feedback>();
+
+        /// <summary>
+        /// Follows the dimmer's online state. Created with the dimmer once every device has
+        /// activated, so it is in place before any device initializes; it stays null when the
+        /// dimmer cannot be created.
+        /// </summary>
+        public StatusMonitorBase CommunicationMonitor { get; private set; }
 
         /// <summary>True while the dimmer is registered and online through its gateway.</summary>
         public BoolFeedback IsOnlineFeedback { get; }
@@ -69,6 +76,9 @@ namespace PepperDash.Essentials.Plugins
 
                 if (_dimmer.Registerable)
                     _dimmer.RegisterWithLogging(Key);
+
+                CommunicationMonitor = new CrestronGenericBaseCommunicationMonitor(this, _dimmer, 120000, 300000);
+                CommunicationMonitor.Start();
             });
         }
 

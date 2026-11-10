@@ -9,12 +9,17 @@ using PepperDash.Essentials.Core.CrestronIO;
 
 namespace PepperDash.Essentials.Plugins
 {
-    public class Din8sw8Controller : EssentialsDevice, ISwitchedOutputCollection
+    public class Din8sw8Controller : EssentialsDevice, ISwitchedOutputCollection, ICommunicationMonitor
     {
         // Need to figure out some sort of interface to make these switched outputs behave like processor relays so they can be used interchangably
 
         public Din8Sw8 SwitchModule { get; private set; }
         
+        /// <summary>
+        /// Follows the module's online state. Created with the module and started on activation.
+        /// </summary>
+        public StatusMonitorBase CommunicationMonitor { get; private set; }
+
         /// <summary>
         /// Collection of generic switched outputs
         /// </summary>
@@ -33,6 +38,15 @@ namespace PepperDash.Essentials.Plugins
             }
 
             PopulateDictionary();
+
+            CommunicationMonitor = new CrestronGenericBaseCommunicationMonitor(this, SwitchModule, 120000, 300000);
+        }
+
+        protected override bool CustomActivate()
+        {
+            CommunicationMonitor.Start();
+
+            return base.CustomActivate();
         }
 
         /// <summary>

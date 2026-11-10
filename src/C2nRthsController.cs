@@ -29,11 +29,13 @@ namespace PepperDash.Essentials.Plugins
         public C2nRthsController(string key, Func<DeviceConfig, C2nRths> preActivationFunc, DeviceConfig config)
             : base(key, config.Name)
         {
+            // Refreshes the feedbacks 30 s after start, then every 5 minutes. TotalMilliseconds, not
+            // Milliseconds: the latter is only the milliseconds part of the span, which is 0 here.
             _pollTimer = new CTimer(
-                _ => Feedbacks.ToList().ForEach(f => f.FireUpdate()), 
+                _ => RefreshFeedbacks(),
                 this,
-                TimeSpan.FromSeconds(30).Milliseconds, 
-                TimeSpan.FromMinutes(5).Milliseconds);
+                (long)TimeSpan.FromSeconds(30).TotalMilliseconds,
+                (long)TimeSpan.FromMinutes(5).TotalMilliseconds);
             
             AddPreActivationAction(() =>
             {
@@ -46,9 +48,9 @@ namespace PepperDash.Essentials.Plugins
 
                 RegisterCrestronGenericBase(_device);
                     
-                TemperatureFeedback = new IntFeedback(() => _device.TemperatureFeedback.UShortValue);
-                TemperatureInCFeedback = new BoolFeedback(() => _device.TemperatureFormat.BoolValue);
-                HumidityFeedback = new IntFeedback(() => _device.HumidityFeedback.UShortValue);
+                TemperatureFeedback = new IntFeedback("Temperature", () => _device.TemperatureFeedback.UShortValue);
+                TemperatureInCFeedback = new BoolFeedback("TemperatureInC", () => _device.TemperatureFormat.BoolValue);
+                HumidityFeedback = new IntFeedback("Humidity", () => _device.HumidityFeedback.UShortValue);
                 
                 Feedbacks.AddRange(new List<Feedback> { TemperatureFeedback, TemperatureInCFeedback, HumidityFeedback });
                 _device.BaseEvent += DeviceOnBaseEvent;
@@ -56,6 +58,25 @@ namespace PepperDash.Essentials.Plugins
                 _device.OnlineStatusChange += (d, args) => 
                     this.LogDebug("Device status change... Online:{IsOnline} Temp:{Temperature} Humidity:{Humidity}", _device.IsOnline, _device.TemperatureFeedback.UShortValue, _device.HumidityFeedback.UShortValue);
             });
+        }
+
+        /// <summary>
+        /// Updates every feedback on the list, keeping one that cannot be read from stopping the
+        /// rest. Runs on the timer's thread, where an exception would otherwise go unhandled.
+        /// </summary>
+        private void RefreshFeedbacks()
+        {
+            foreach (var feedback in Feedbacks.ToList())
+            {
+                try
+                {
+                    feedback.FireUpdate();
+                }
+                catch (Exception ex)
+                {
+                    this.LogDebug("Feedback {FeedbackKey} could not be refreshed: {Message}", feedback.Key, ex.Message);
+                }
+            }
         }
 
         private void DeviceOnBaseEvent(GenericBase device, BaseEventArgs args)

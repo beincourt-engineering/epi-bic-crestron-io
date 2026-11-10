@@ -15,11 +15,18 @@ using Feedback = PepperDash.Essentials.Core.Feedback;
 namespace PepperDash.Essentials.Plugins
 {
     [Description("Wrapper class for all HR-Series remotes")]
-    public class Hrxx0WirelessRemoteController : EssentialsBridgeableDevice, IHasFeedback, IHR52Button
+    public class Hrxx0WirelessRemoteController : EssentialsBridgeableDevice, IHasFeedback, IHR52Button, ICommunicationMonitor
     {        
         private Hr1x0WirelessRemoteBase _remote;        
 
         public FeedbackCollection<Feedback> Feedbacks { get; } = new FeedbackCollection<Feedback>();
+
+        /// <summary>
+        /// Follows the remote's online state. Created with the remote once every device has
+        /// activated, so it is in place before any device initializes; it stays null when the
+        /// remote cannot be created.
+        /// </summary>
+        public StatusMonitorBase CommunicationMonitor { get; private set; }
 
         public CrestronCollection<Button> Buttons => _remote.Button;
 
@@ -40,6 +47,12 @@ namespace PepperDash.Essentials.Plugins
                 if (_remote != null && _remote.Registerable)
                 {
                     _remote.RegisterWithLogging(Key);
+                }
+
+                if (_remote != null)
+                {
+                    CommunicationMonitor = new CrestronGenericBaseCommunicationMonitor(this, _remote, 120000, 300000);
+                    CommunicationMonitor.Start();
                 }
             });            
         }        

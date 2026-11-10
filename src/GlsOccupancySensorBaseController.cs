@@ -153,7 +153,8 @@ namespace PepperDash.Essentials.Plugins
 		{
 			OccSensor = occSensor;
 
-			RoomIsOccupiedFeedback = new BoolFeedback(RoomIsOccupiedFeedbackFunc);
+			RoomIsOccupiedFeedback = new BoolFeedback("RoomIsOccupied", RoomIsOccupiedFeedbackFunc);
+			AddToFeedbackList(RoomIsOccupiedFeedback);
 
 			PirSensorEnabledFeedback = new BoolFeedback(() => OccSensor.PirEnabledFeedback.BoolValue);
 

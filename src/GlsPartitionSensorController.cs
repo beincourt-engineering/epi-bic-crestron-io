@@ -58,16 +58,19 @@ namespace PepperDash.Essentials.Plugins
             {
                 _partitionSensor = preActivationFunc(config);
 
-if (_partitionSensor != null) CrestronInvoke.BeginInvoke(o => RegisterCrestronGenericBase(_partitionSensor));
+                // On this thread, not a background one, so the hardware, its online feedback and the
+                // communication monitor are all in place before activation uses them.
+                if (_partitionSensor != null) RegisterCrestronGenericBase(_partitionSensor);
 
                 EnableFeedback = new BoolFeedback(() => InTestMode ? TestEnableFeedback : _partitionSensor.EnableFeedback.BoolValue);
-                PartitionPresentFeedback = new BoolFeedback(() => InTestMode ? TestPartitionSensedFeedback : _partitionSensor.PartitionSensedFeedback.BoolValue);
+                PartitionPresentFeedback = new BoolFeedback("PartitionPresent", () => InTestMode ? TestPartitionSensedFeedback : _partitionSensor.PartitionSensedFeedback.BoolValue);
                 PartitionNotSensedFeedback = new BoolFeedback(() => InTestMode ? !TestPartitionSensedFeedback : _partitionSensor.PartitionNotSensedFeedback.BoolValue);
                 SensitivityFeedback = new IntFeedback(() => InTestMode ? TestSensitivityFeedback : _partitionSensor.SensitivityFeedback.UShortValue);
 
                 if (_partitionSensor != null)
                 {
                     _partitionSensor.BaseEvent += PartitionSensor_BaseEvent;
+                    AddToFeedbackList(PartitionPresentFeedback);
                 }
             });
 

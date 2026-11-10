@@ -13,7 +13,7 @@ namespace PepperDash.Essentials.Plugins
         public CenIoDi104 Di104 { get; private set; }
 
         public CenIoDigIn104Controller(string key, string name, CenIoDi104 di104)
-            : base(key, name)
+            : base(key, name, di104)
         {
             Di104 = di104;
         }
