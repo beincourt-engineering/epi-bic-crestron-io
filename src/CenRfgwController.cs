@@ -61,7 +61,7 @@ namespace PepperDash.Essentials.Plugins
         {
             MinimumEssentialsFrameworkVersion = "3.0.0";
 
-            TypeNames = new List<string> { "cenrfgwex", "cenerfgwpoe", "cengwexer", "internal" };
+            TypeNames = new List<string> { "cenrfgwex", "cenerfgwpoe", "cengwexer", "internal", "cengw1" };
         }
 
         public override EssentialsDevice BuildDevice(DeviceConfig dc)
@@ -154,6 +154,10 @@ namespace PepperDash.Essentials.Plugins
                         if (shareable)
                             return new CenRfgwExEthernetSharable(ipId, Global.ControlSystem);
                         return new CenRfgwEx(ipId, Global.ControlSystem);
+                    }
+                case "cengw1":
+                    {
+                        return new CenGw1(ipId, Global.ControlSystem);
                     }
                 default:
                     Debug.LogWarning("Device {device} is not a valid ethernet RF gateway", type);
